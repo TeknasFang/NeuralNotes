@@ -85,30 +85,76 @@ class NodeManager {
     }
 
     createNode(x, y, parentId = null) {
-        if (!this.currentTopic) return;
-        
-        const nodeId = Date.now().toString();
-        const newNode = {
-            id: nodeId,
-            x,
-            y,
-            title: `Node ${this.nodes.length + 1}`,
-            parentId,
-            children: []
-        };
-        
-        if (parentId) {
-            const parent = this.nodes.find(n => n.id === parentId);
-            if (parent) {
-                parent.children.push(nodeId);
-            }
-        }
-        
-        this.nodes.push(newNode);
-        this.storage.saveNodes(this.currentTopic, this.nodes);
-        this.createNodeElement(newNode);
-        this.updateConnections();
+    if (!this.currentTopic) return;
+    
+    // Calculate center of visible area
+    const canvasRect = this.canvas.getBoundingClientRect();
+    const container = this.canvas.parentElement;
+    const scrollLeft = container.scrollLeft;
+    const scrollTop = container.scrollTop;
+    
+    // If no specific coordinates provided, use center of viewport
+    if (x === undefined || y === undefined) {
+        const centerX = container.clientWidth / 2 + scrollLeft - canvasRect.left;
+        const centerY = container.clientHeight / 2 + scrollTop - canvasRect.top;
+        x = centerX - this.canvasPos.x;
+        y = centerY - this.canvasPos.y;
     }
+    
+    const nodeId = Date.now().toString();
+    const newNode = {
+        id: nodeId,
+        x,
+        y,
+        title: `Node ${this.nodes.length + 1}`,
+        parentId,
+        children: []
+    };
+    
+    if (parentId) {
+        const parent = this.nodes.find(n => n.id === parentId);
+        if (parent) {
+            parent.children.push(nodeId);
+        }
+    }
+    
+    this.nodes.push(newNode);
+    this.storage.saveNodes(this.currentTopic, this.nodes);
+    this.createNodeElement(newNode);
+    this.updateConnections();
+    
+    // Center the view on the new node if it's not already visible
+    this.ensureNodeIsVisible(nodeId);
+}
+
+ensureNodeIsVisible(nodeId) {
+    const node = this.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    
+    const container = this.canvas.parentElement;
+    const nodeEl = document.querySelector(`.node[data-id="${nodeId}"]`);
+    if (!nodeEl) return;
+    
+    const nodeRect = nodeEl.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    
+    // Calculate required scroll positions
+    const nodeCenterX = nodeRect.left + nodeRect.width/2;
+    const nodeCenterY = nodeRect.top + nodeRect.height/2;
+    const containerCenterX = containerRect.left + containerRect.width/2;
+    const containerCenterY = containerRect.top + containerRect.height/2;
+    
+    // Calculate needed scroll adjustment
+    const scrollLeft = container.scrollLeft + (nodeCenterX - containerCenterX);
+    const scrollTop = container.scrollTop + (nodeCenterY - containerCenterY);
+    
+    // Smooth scroll to center the node
+    container.scrollTo({
+        left: scrollLeft,
+        top: scrollTop,
+        behavior: 'smooth'
+    });
+}
 
     createNodeElement(node) {
         const nodeEl = document.createElement('div');
