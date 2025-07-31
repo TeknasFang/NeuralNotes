@@ -26,7 +26,6 @@ class NodeManager {
     }
 
     setupEventListeners() {
-        // Canvas dragging
         this.canvas.addEventListener('mousedown', (e) => {
             if (e.target === this.canvas) {
                 this.panning = true;
@@ -44,18 +43,25 @@ class NodeManager {
                 this.canvasPos.x = this.canvasStartPos.x + dx;
                 this.canvasPos.y = this.canvasStartPos.y + dy;
                 this.canvas.style.transform = `translate(${this.canvasPos.x}px, ${this.canvasPos.y}px)`;
+            } else if (this.dragging) {
+                this.handleNodeDrag(e);
             }
         });
 
         document.addEventListener('mouseup', () => {
-            this.panning = false;
-            this.canvas.style.cursor = 'default';
+            if (this.panning) {
+                this.panning = false;
+                this.canvas.style.cursor = 'default';
+            }
+            if (this.dragging) {
+                this.endNodeDrag();
+            }
         });
 
-        // Add node button
         document.querySelector('.add-node').addEventListener('click', () => {
-            this.createNode(this.canvas.clientWidth / 2 - this.canvasPos.x, 
-                          this.canvas.clientHeight / 2 - this.canvasPos.y);
+            const centerX = this.canvas.clientWidth / 2 - this.canvasPos.x;
+            const centerY = this.canvas.clientHeight / 2 - this.canvasPos.y;
+            this.createNode(centerX, centerY);
         });
     }
 
@@ -64,17 +70,14 @@ class NodeManager {
         this.currentTopic = topicName;
         this.nodes = this.storage.getNodes(topicName);
         
-        // Create DOM elements for nodes
         this.nodes.forEach(node => {
             this.createNodeElement(node);
         });
         
-        // Create connections
         this.updateConnections();
     }
 
     clearCanvas() {
-        // Remove all node elements
         document.querySelectorAll('.node').forEach(el => el.remove());
         document.querySelectorAll('.connection-line').forEach(el => el.remove());
         this.nodes = [];
@@ -114,12 +117,19 @@ class NodeManager {
         nodeEl.style.top = `${node.y}px`;
         nodeEl.dataset.id = node.id;
         
+        if (node.parentId) {
+            nodeEl.classList.add('child-node');
+        } else {
+            nodeEl.classList.add('root-node');
+        }
+        
         const titleEl = document.createElement('div');
         titleEl.className = 'node-title';
         titleEl.textContent = node.title;
         nodeEl.appendChild(titleEl);
         
-        // Node event listeners
+        this.adjustTextSize(titleEl);
+        
         nodeEl.addEventListener('click', (e) => {
             e.stopPropagation();
             this.openNodePopup(node);
@@ -130,7 +140,6 @@ class NodeManager {
             this.createNode(node.x + 150, node.y + 150, node.id);
         });
         
-        // Dragging
         nodeEl.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             this.dragging = true;
@@ -143,6 +152,20 @@ class NodeManager {
         });
         
         this.canvas.appendChild(nodeEl);
+    }
+
+    adjustTextSize(titleEl) {
+        const text = titleEl.textContent;
+        const length = text.length;
+        
+        let fontSize = 16;
+        if (length > 15) fontSize = 14;
+        if (length > 25) fontSize = 12;
+        if (length > 35) fontSize = 10;
+        if (length > 50) fontSize = 8;
+        
+        titleEl.style.fontSize = `${fontSize}px`;
+        titleEl.style.lineHeight = `${fontSize + 2}px`;
     }
 
     openNodePopup(node) {
@@ -158,23 +181,21 @@ class NodeManager {
         popup.classList.add('visible');
         overlay.classList.add('visible');
         
-        // Save button
         popup.querySelector('.save-node').onclick = () => {
             node.title = titleInput.value;
             this.storage.saveNodes(this.currentTopic, this.nodes);
             this.storage.saveNodeContent(this.currentTopic, node.id, contentInput.value);
             
-            // Update node title in DOM
             const nodeEl = document.querySelector(`.node[data-id="${node.id}"] .node-title`);
             if (nodeEl) {
                 nodeEl.textContent = node.title;
+                this.adjustTextSize(nodeEl);
             }
             
             popup.classList.remove('visible');
             overlay.classList.remove('visible');
         };
         
-        // Close button
         popup.querySelector('.close-popup').onclick = () => {
             popup.classList.remove('visible');
             overlay.classList.remove('visible');
@@ -182,11 +203,9 @@ class NodeManager {
     }
 
     updateConnections() {
-        // Clear existing connections
         document.querySelectorAll('.connection-line').forEach(el => el.remove());
         this.connections = [];
         
-        // Create new connections
         this.nodes.forEach(node => {
             node.children.forEach(childId => {
                 const child = this.nodes.find(n => n.id === childId);
@@ -201,11 +220,10 @@ class NodeManager {
         const line = document.createElement('div');
         line.className = 'connection-line';
         
-        // Calculate line position and dimensions
-        const x1 = parent.x + 60; // Center of parent node
-        const y1 = parent.y + 60;
-        const x2 = child.x + 60; // Center of child node
-        const y2 = child.y + 60;
+        const x1 = parent.x + (parent.parentId ? 55 : 65);
+        const y1 = parent.y + (parent.parentId ? 55 : 65);
+        const x2 = child.x + (child.parentId ? 55 : 65);
+        const y2 = child.y + (child.parentId ? 55 : 65);
         
         const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
@@ -247,4 +265,4 @@ class NodeManager {
         this.dragging = false;
         this.selectedNode = null;
     }
-    }
+}
