@@ -5,6 +5,8 @@
     --sidebar-color: #2c3e50;
     --text-color: #333;
     --node-color: #ff9a3c;
+    --root-node-color: #4a6fa5;
+    --child-node-color: #ff9a3c;
 }
 
 * {
@@ -123,10 +125,7 @@ body {
 
 .node {
     position: absolute;
-    width: 120px;
-    height: 120px;
     border-radius: 50%;
-    background-color: var(--node-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -134,6 +133,24 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s;
     z-index: 10;
+    overflow: hidden;
+    word-wrap: break-word;
+    padding: 10px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+}
+
+.node.root-node {
+    width: 130px;
+    height: 130px;
+    background-color: var(--root-node-color);
+}
+
+.node.child-node {
+    width: 110px;
+    height: 110px;
+    background-color: var(--child-node-color);
 }
 
 .node:hover {
@@ -142,11 +159,15 @@ body {
 }
 
 .node-title {
-    text-align: center;
-    color: white;
-    font-weight: bold;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 10px;
-    word-break: break-word;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
     user-select: none;
 }
 
@@ -170,11 +191,13 @@ body {
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
     z-index: 1000;
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.3s, transform 0.3s;
 }
 
 .node-popup.visible {
     opacity: 1;
+    pointer-events: all;
     transform: translate(-50%, -50%) scale(1);
 }
 
@@ -248,4 +271,4 @@ body {
 .overlay.visible {
     opacity: 1;
     pointer-events: all;
-  }
+    }
