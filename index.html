@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Notes</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Topics</h2>
+                <button class="add-topic">+</button>
+            </div>
+            <ul class="topic-list">
+                <!-- Dynamically populated -->
+            </ul>
+        </div>
+        <div class="main-content">
+            <div class="canvas-container">
+                <div class="canvas" id="neuralCanvas">
+                    <button class="add-node">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="node-popup hidden">
+            <div class="popup-header">
+                <input type="text" class="node-title">
+                <button class="close-popup">×</button>
+            </div>
+            <textarea class="node-content"></textarea>
+            <div class="popup-footer">
+                <button class="save-node">Save</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/storage.js"></script>
+    <script src="js/node.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
